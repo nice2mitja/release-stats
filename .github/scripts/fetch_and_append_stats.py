@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 # GitHub API URL to get releases of the SapMachine repository
 api_url = "https://api.github.com/repos/SAP/SapMachine/releases"
@@ -17,7 +17,7 @@ data = []
 for release in releases:
     for asset in release['assets']:
         data.append({
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),  # Use timezone-aware datetime
             'release_name': release['name'],
             'asset_name': asset['name'],
             'download_count': asset['download_count']
