@@ -21,18 +21,17 @@ def fetch_all_releases(api_url):
 # Fetch all release data
 releases = fetch_all_releases(api_url)
 
-# Prepare a list to store the data
+# Prepare a list to store the aggregated data
 data = []
 
-# Loop through each release
+# Loop through each release to sum up the download counts
 for release in releases:
-    for asset in release['assets']:
-        data.append({
-            'timestamp': datetime.now(timezone.utc).isoformat(),  # Use timezone-aware datetime
-            'release_name': release['name'],
-            'asset_name': asset['name'],
-            'download_count': asset['download_count']
-        })
+    total_downloads = sum(asset['download_count'] for asset in release['assets'])
+    data.append({
+        'timestamp': datetime.now(timezone.utc).isoformat(),  # Use timezone-aware datetime
+        'release_name': release['name'],
+        'total_download_count': total_downloads
+    })
 
 # Convert the list to a DataFrame
 df = pd.DataFrame(data)
