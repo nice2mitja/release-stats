@@ -1,8 +1,6 @@
 name: Nightly Snapshot of Release Download Statistics
 
 on:
-  schedule:
-    - cron: '0 1 * * *'  # Runs every day at 1:00 AM UTC
 workflow_dispatch:
     inputs:
       logLevel:
