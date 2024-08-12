@@ -1,7 +1,7 @@
 name: Nightly Snapshot of Release Download Statistics
 
 on:
-workflow_dispatch:
+ workflow_dispatch:
     inputs:
       logLevel:
         description: 'Log level'
