@@ -1,48 +1,63 @@
 import requests
 import pandas as pd
-import os
-from datetime import datetime, timezone
+from datetime import datetime
+import uuid
 
-# GitHub API URL to get releases of the SapMachine repository
-api_url = "https://api.github.com/repos/SAP/SapMachine/releases"
-
-# Function to fetch all pages of release data
-def fetch_all_releases(api_url):
+# Function to fetch download stats for all releases
+def fetch_release_stats():
     releases = []
-    while api_url:
-        response = requests.get(api_url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        releases.extend(response.json())
+    url = "https://api.github.com/repos/SAP/SapMachine/releases"
+    
+    while url:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        releases.extend(data)
+        # Get the URL for the next page, if it exists
+        url = response.links.get('next', {}).get('url')
+    
+    stats = []
+    for release in releases:
+        release_name = release['name']
+        release_id = release['id']
+        is_prerelease = release['prerelease']  # Check if the release is a pre-release
+        total_downloads = sum(asset['download_count'] for asset in release['assets'])
+        stats.append({
+            'release_name': release_name,
+            'release_id': release_id,
+            'is_prerelease': is_prerelease,
+            'total_downloads': total_downloads
+        })
+    
+    return stats
 
-        # Check if there's a next page
-        api_url = response.links.get('next', {}).get('url')
-    return releases
+# Fetch stats and append timestamp
+def append_stats_to_csv(stats, file_name="release_stats.csv"):
+    timestamp = datetime.utcnow().isoformat()
+    data = []
+    
+    for stat in stats:
+        data.append({
+            'id': str(uuid.uuid4()),  # Generate a unique ID for each row
+            'timestamp': timestamp,
+            'release_name': stat['release_name'],
+            'release_id': stat['release_id'],
+            'is_prerelease': stat['is_prerelease'],
+            'total_downloads': stat['total_downloads']
+        })
+    
+    df = pd.DataFrame(data)
+    
+    # Append to CSV file
+    try:
+        existing_df = pd.read_csv(file_name)
+        df = pd.concat([existing_df, df], ignore_index=True)
+    except FileNotFoundError:
+        pass
+    
+    df.to_csv(file_name, index=False)
 
-# Fetch all release data
-releases = fetch_all_releases(api_url)
-
-# Prepare a list to store the aggregated data
-data = []
-
-# Loop through each release to sum up the download counts
-for release in releases:
-    total_downloads = sum(asset['download_count'] for asset in release['assets'])
-    data.append({
-        'timestamp': datetime.now(timezone.utc).isoformat(),  # Use timezone-aware datetime
-        'release_name': release['name'],
-        'total_download_count': total_downloads
-    })
-
-# Convert the list to a DataFrame
-df = pd.DataFrame(data)
-
-# Define the path to the CSV file
-csv_file = 'release_stats.csv'
-
-# Check if the CSV file exists
-if os.path.exists(csv_file):
-    # If the file exists, append the new data
-    df.to_csv(csv_file, mode='a', header=False, index=False)
-else:
-    # If the file does not exist, create it with headers
-    df.to_csv(csv_file, mode='w', header=True, index=False)
+# Main execution
+if __name__ == "__main__":
+    stats = fetch_release_stats()
+    append_stats_to_csv(stats)
