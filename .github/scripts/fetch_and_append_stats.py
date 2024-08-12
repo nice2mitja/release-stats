@@ -53,4 +53,12 @@ def append_stats_to_csv(stats, file_name="release_stats.csv"):
     try:
         existing_df = pd.read_csv(file_name)
         df = pd.concat([existing_df, df], ignore_index=True)
-   
+    except FileNotFoundError:
+        df.to_csv(file_name, index=False)  # Create the file if it doesn't exist
+    else:
+        df.to_csv(file_name, index=False)
+
+# Main execution
+if __name__ == "__main__":
+    stats = fetch_release_stats()
+    append_stats_to_csv(stats)
