@@ -33,12 +33,13 @@ def fetch_release_stats():
 
 # Fetch stats and append timestamp
 def append_stats_to_csv(stats, file_name="release_stats.csv"):
+    unique_id = str(uuid.uuid4())  # Generate a unique ID for the entire run
     timestamp = datetime.utcnow().isoformat()
     data = []
     
     for stat in stats:
         data.append({
-            'id': str(uuid.uuid4()),  # Generate a unique ID for each row
+            'id': unique_id,  # Use the same unique ID for all rows in this run
             'timestamp': timestamp,
             'release_name': stat['release_name'],
             'release_id': stat['release_id'],
@@ -52,12 +53,4 @@ def append_stats_to_csv(stats, file_name="release_stats.csv"):
     try:
         existing_df = pd.read_csv(file_name)
         df = pd.concat([existing_df, df], ignore_index=True)
-    except FileNotFoundError:
-        pass
-    
-    df.to_csv(file_name, index=False)
-
-# Main execution
-if __name__ == "__main__":
-    stats = fetch_release_stats()
-    append_stats_to_csv(stats)
+   
