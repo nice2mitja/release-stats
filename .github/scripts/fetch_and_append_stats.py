@@ -55,7 +55,7 @@ def fetch_release_stats():
 def extract_os_arch_type(asset_name):
     patterns = {
         'linux': r'linux',
-        'macos': r'macos',
+        'macos': r'macos|osx',  # Updated to include both macos and osx
         'windows': r'windows',
         'alpine': r'alpine',
         'aarch64': r'aarch64',
@@ -79,7 +79,7 @@ def extract_os_arch_type(asset_name):
     for key, pattern in patterns.items():
         if re.search(pattern, asset_name):
             if key in ['linux', 'macos', 'windows', 'alpine']:
-                os_name = key
+                os_name = 'macos' if key == 'macos' else key
             elif key in ['aarch64', 'x64', 'x86', 'ppc64le']:
                 arch = key
     
