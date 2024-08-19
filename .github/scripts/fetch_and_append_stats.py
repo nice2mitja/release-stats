@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 import uuid
+import re
 
 # Function to fetch download stats for all releases
 def fetch_release_stats():
@@ -21,15 +22,51 @@ def fetch_release_stats():
         release_name = release['name']
         release_id = release['id']
         is_prerelease = release['prerelease']  # Check if the release is a pre-release
-        total_downloads = sum(asset['download_count'] for asset in release['assets'])
-        stats.append({
-            'release_name': release_name,
-            'release_id': release_id,
-            'is_prerelease': is_prerelease,
-            'total_downloads': total_downloads
-        })
+        
+        for asset in release['assets']:
+            asset_name = asset['name']
+            total_downloads = asset['download_count']
+            
+            # Extract OS and architecture from the asset name using regex
+            os_arch = extract_os_arch(asset_name)
+            os_name = os_arch.get('os')
+            arch = os_arch.get('arch')
+            
+            stats.append({
+                'release_name': release_name,
+                'release_id': release_id,
+                'is_prerelease': is_prerelease,
+                'asset_name': asset_name,
+                'os_name': os_name,
+                'architecture': arch,
+                'total_downloads': total_downloads
+            })
     
     return stats
+
+# Function to extract OS and architecture from asset name
+def extract_os_arch(asset_name):
+    patterns = {
+        'linux': r'linux',
+        'macos': r'macos',
+        'windows': r'windows',
+        'aarch64': r'aarch64',
+        'x64': r'x64',
+        'x86': r'x86',
+        'ppc64le': r'ppc64le'
+    }
+    
+    os_name = None
+    arch = None
+    
+    for key, pattern in patterns.items():
+        if re.search(pattern, asset_name):
+            if key in ['linux', 'macos', 'windows']:
+                os_name = key
+            else:
+                arch = key
+    
+    return {'os': os_name, 'arch': arch}
 
 # Fetch stats and append timestamp
 def append_stats_to_csv(stats, file_name="release_stats.csv"):
@@ -44,6 +81,9 @@ def append_stats_to_csv(stats, file_name="release_stats.csv"):
             'release_name': stat['release_name'],
             'release_id': stat['release_id'],
             'is_prerelease': stat['is_prerelease'],
+            'asset_name': stat['asset_name'],
+            'os_name': stat['os_name'],
+            'architecture': stat['architecture'],
             'total_downloads': stat['total_downloads']
         })
     
